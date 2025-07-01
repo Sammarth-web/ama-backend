@@ -22,7 +22,26 @@ SYSTEM_PROMPT = """
     --Code blocks Example
 """
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/model", response_class=HTMLResponse)
+async def query_model(prompt: str = Query(..., description="The prompt to send to Gemini")):
+    try:
+        # Run the model with the given prompt
+        full_prompt = f"{SYSTEM_PROMPT.strip()}\n\n{prompt.strip()}"
+        result = model.invoke(full_prompt)
+
+        html_content = markdown.markdown(result.content) # type: ignore
+        
+        # Return result content in a basic HTML format
+        return{
+            "prompt" : prompt,
+            "reponse_markdown" : result.content,
+            "reponse_html" : html_content
+        }
+    except Exception as e:
+        return HTMLResponse(content=f"<h2>Error:</h2><p>{str(e)}</p>", status_code=500)
+
+
+@app.get("/model_html", response_class=HTMLResponse)
 async def query_model(prompt: str = Query(..., description="The prompt to send to Gemini")):
     try:
         # Run the model with the given prompt
@@ -39,30 +58,19 @@ async def query_model(prompt: str = Query(..., description="The prompt to send t
                 <h2>Prompt:</h2>
                 <p>{prompt}</p>
                 <h2>Response:</h2>
-                <p>{ html_content }</p>
-
-                <p>{ result }</p>
+                <p>{html_content}</p>
             </body>
         </html>
         """
     except Exception as e:
-        return HTMLResponse(content=f"<h2>Error:</h2><p>{str(e)}</p>", status_code=500)
-    
+        return HTMLResponse(content=f"<h2>Error:</h2><p>{str(e)}</p>", status_code=500)  
 
 
-@app.get("/model", response_class=HTMLResponse)
-async def query_model(prompt: str = Query(..., description="The prompt to send to Gemini")):
+@app.get("/", response_class=HTMLResponse)
+async def query_model():
     try :
         
         # Return result content in a basic HTML format
-        return f"""
-        <html>
-            <head><title>Gemini Response</title></head>
-            <body>
-                <h2> Hello from </h2>
-                <p> Deployments </p>
-            </body>
-        </html>
-        """
+        return {"message": "Hello from model deployment"}
     except Exception as e:
         return HTMLResponse(content=f"<h2>Error:</h2><p>{str(e)}</p>", status_code=500)
