@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 import markdown
@@ -23,26 +24,30 @@ SYSTEM_PROMPT = """
 """
 
 @app.get("/model", response_class=HTMLResponse)
-async def query_model(prompt: str = Query(..., description="The prompt to send to Gemini")):
+async def query_model_root(prompt: str = Query(..., description="The prompt to send to Gemini")):
     try:
         # Run the model with the given prompt
         full_prompt = f"{SYSTEM_PROMPT.strip()}\n\n{prompt.strip()}"
         result = model.invoke(full_prompt)
 
         html_content = markdown.markdown(result.content) # type: ignore
-        
-        # Return result content in a basic HTML format
-        return{
+
+        data = {
             "prompt" : prompt,
             "reponse_markdown" : result.content,
             "reponse_html" : html_content
         }
+        
+        # Return result content in a basic JSON format
+        return JSONResponse( content=data)
+
+
     except Exception as e:
         return HTMLResponse(content=f"<h2>Error:</h2><p>{str(e)}</p>", status_code=500)
 
 
 @app.get("/model_html", response_class=HTMLResponse)
-async def query_model(prompt: str = Query(..., description="The prompt to send to Gemini")):
+async def query_model_html(prompt: str = Query(..., description="The prompt to send to Gemini")):
     try:
         # Run the model with the given prompt
         full_prompt = f"{SYSTEM_PROMPT.strip()}\n\n{prompt.strip()}"
@@ -67,10 +72,12 @@ async def query_model(prompt: str = Query(..., description="The prompt to send t
 
 
 @app.get("/", response_class=HTMLResponse)
-async def query_model():
+async def query_model_msg():
     try :
         
         # Return result content in a basic HTML format
-        return {"message": "Hello from model deployment"}
+        data = {"message": "Hello from model deployment"}
+        return JSONResponse( content= data)
     except Exception as e:
         return HTMLResponse(content=f"<h2>Error:</h2><p>{str(e)}</p>", status_code=500)
+
